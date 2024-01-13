@@ -1,7 +1,25 @@
 <?php
 session_start();
+require_once 'functions.php';
+
 $_SESSION['id'] = $_GET['id'];
+$id = $_GET['id'];
+
+$arrayStatus =
+    [
+        'Онлайн' => 'online',
+        'Отошел' => 'moved away',
+        'Не беспокоить' => 'do not disturb'
+    ];
+
+$pdo = getConnection();
+$sql = "SELECT status FROM diplom_baza WHERE id =:id";
+$statement = $pdo->prepare($sql);
+$statement->execute(['id'=>$id]);
+$status = $statement->fetch(PDO::FETCH_COLUMN);
+
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,7 +55,6 @@ $_SESSION['id'] = $_GET['id'];
             <h1 class="subheader-title">
                 <i class='subheader-icon fal fa-sun'></i> Установить статус
             </h1>
-
         </div>
         <form action="update_status.php" method="post">
             <div class="row">
@@ -54,9 +71,17 @@ $_SESSION['id'] = $_GET['id'];
                                         <div class="form-group">
                                             <label class="form-label" for="example-select">Выберите статус</label>
                                             <select name="status" class="form-control" id="example-select">
-                                                <option>Онлайн</option>
-                                                <option>Отошел</option>
-                                                <option>Не беспокоить</option>
+                                                <?php foreach ($arrayStatus as $key=>$value):
+                                                if ($status != $value){
+                                                continue; } else { ?>
+                                                 <option><?=$key?></option>
+                                                 <?php unset($arrayStatus[$key]); } endforeach;
+                                                foreach ($arrayStatus as $key=>$value): ?>
+                                                <option><?=$key?></option>
+                                                <?php unset($arrayStatus[$key]);
+                                                break;
+                                                endforeach; ?>
+                                                <option><?=array_key_first($arrayStatus)?></option>
                                             </select>
                                         </div>
                                     </div>
@@ -107,3 +132,5 @@ $_SESSION['id'] = $_GET['id'];
     </script>
 </body>
 </html>
+
+

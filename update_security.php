@@ -1,5 +1,7 @@
 <?php
 session_start();
+require_once 'functions.php';
+
 $_SESSION['new'] = 1;
 $_SESSION['validation'] = [];
 
@@ -8,7 +10,7 @@ $email = $_POST['email'];
 $password1 = $_POST['password1'];
 $password2 = $_POST['password2'];
 
-$pdo = new PDO('mysql:host=127.0.0.1;dbname=marlin;charset=utf8', 'root', '');
+$pdo = getConnection();
 $sql = "SELECT id, email FROM diplom_baza";
 $statement = $pdo->prepare($sql);
 $statement->execute();
@@ -19,6 +21,12 @@ foreach ($users as $user) {
     header('Location:security.php');
     exit();
     }
+}
+
+if ($password1 === '' || $password2 === '') {
+    $_SESSION['validation']['error'] = 'Заполните поле пароль!';
+    header('Location:security.php');
+    exit();
 }
 
 if ($password1 != $password2) {

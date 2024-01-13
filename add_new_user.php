@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'functions.php';
 
 $name = explode('.', $_FILES['image']['name']);
 $name = $name[1];
@@ -46,7 +47,7 @@ $userArray =
     'instagram' => $instagram
     ];
 
-$pdo = new PDO('mysql:host=127.0.0.1;dbname=marlin;charset=utf8', 'root', '');
+$pdo = getConnection();
 $sql = "INSERT INTO `diplom_baza`(`username`, `job_title`, `status`, `image`, `phone`, `address`, `email`, `password`, 
         `role`, `vk`, `telegram`, `instagram`) VALUES (:username, :job_title, :status, :image, :phone, :address, 
          :email, :password, :role, :vk, :telegram, :instagram)";

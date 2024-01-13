@@ -2,9 +2,21 @@
 
 session_start();
 
+/**
+ * @param string $email
+ * @return bool
+ */
 function checkEmail(string $email): bool
 {
     return !filter_var($email, FILTER_VALIDATE_EMAIL);
+}
+
+/**
+ * @return PDO
+ */
+function getConnection(): PDO
+{
+    return new PDO('mysql:host=127.0.0.1;dbname=marlin;charset=utf8','root','');
 }
 
 /**
@@ -13,7 +25,7 @@ function checkEmail(string $email): bool
  */
 function checkUserByEmail(string $email): array|bool
 {
-    $pdo = new PDO('mysql:host=127.0.0.1;dbname=marlin;charset=utf8','root','');
+    $pdo = getConnection();
     $sql = "SELECT * FROM diplom_baza WHERE email= :email";
     $statement = $pdo->prepare($sql);
     $statement->execute(['email'=>$email]);
@@ -54,7 +66,7 @@ function getLocation(string $page): void
 function register(string $email, string $password): bool
 {
     $role = 'user';
-    $pdo = new PDO('mysql:host=127.0.0.1;dbname=marlin;charset=utf8','root','');
+    $pdo = getConnection();
     $sql = "INSERT INTO `diplom_baza`(`email`, `password`, `role`) VALUES (:email, :password, :role)";
     $statement = $pdo->prepare($sql);
     return $statement->execute(['email'=>$email, 'password'=>$password, 'role'=>$role]);
@@ -67,7 +79,7 @@ function register(string $email, string $password): bool
  */
 function login(string $email): array|bool
 {
-    $pdo = new PDO('mysql:host=127.0.0.1;dbname=marlin;charset=utf8','root','');
+    $pdo = getConnection();
     $sql = "SELECT * FROM diplom_baza WHERE email= :email";
     $statement = $pdo->prepare($sql);
     $statement->execute(['email'=>$email]);
@@ -115,7 +127,7 @@ function getPage(array $result): void
  */
 function getUsers(): array|bool
 {
-    $pdo = new PDO('mysql:host=127.0.0.1; dbname=marlin; charset=utf8', 'root', '');
+    $pdo = getConnection();
     $sql = "SELECT * FROM diplom_baza";
     $statemant = $pdo->prepare($sql);
     $statemant->execute();

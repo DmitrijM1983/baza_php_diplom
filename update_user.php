@@ -1,5 +1,7 @@
 <?php
 session_start();
+require_once 'functions.php';
+
 $_SESSION['new'] = 1;
 
 $id = $_SESSION['id'];
@@ -17,7 +19,7 @@ $userArray =
         'address' => $address
     ];
 
-$pdo = new PDO('mysql:host=127.0.0.1;dbname=marlin;charset=utf8', 'root', '');
+$pdo = getConnection();
 $sql = "UPDATE `diplom_baza` SET `username`=:username, `job_title`=:job_title, `phone`=:phone, `address`=:address 
         WHERE id=:id";
 $statement = $pdo->prepare($sql);
