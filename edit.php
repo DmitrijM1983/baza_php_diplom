@@ -1,14 +1,34 @@
 <?php
-session_start();
-require_once 'functions.php';
-$_SESSION['id'] = $_GET['id'];
-$id = $_GET['id'];
 
-$pdo = getConnection();
-$sql = "SELECT * FROM diplom_baza WHERE id =:id";
-$statement = $pdo->prepare($sql);
-$statement->execute(['id'=>$id]);
-$result = $statement->fetch(PDO::FETCH_ASSOC);
+require_once 'init.php';
+$user = DataBase::getConnect()->get('users', ['id'=>$_GET['id']]);
+
+if (!empty($_POST)) {
+    $validate = new Validate();
+    $validation = $validate->check($_POST, [
+            'username' =>
+        [
+            'required' => true,
+            'min' => 3,
+            'max' => 15,
+        ]]);
+
+    if (isset($_POST['username'])) {
+        $checkUsername = $validation->checkUser('username', $_POST['username'], $_GET['id']);
+    }
+
+    if ($validation->passed() && $checkUsername) {
+        $params = $_POST;
+        $user = new User();
+        $user->update($params, $_GET['id']);
+        Session::setFlash('success', 'Profile updated successfully!');
+        Redirect::to('users.php');
+    } else {
+        foreach ($validation->errors() as $error) {
+            echo $error . '<br>';
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -35,7 +55,6 @@ $result = $statement->fetch(PDO::FETCH_ASSOC);
                 </li>
             </ul>
             <ul class="navbar-nav ml-auto">
-
                 <li class="nav-item">
                     <a class="nav-link" href="users.php">Назад</a>
                 </li>
@@ -49,7 +68,7 @@ $result = $statement->fetch(PDO::FETCH_ASSOC);
             </h1>
 
         </div>
-        <form action="update_user.php" method="post">
+        <form action="" method="post">
             <div class="row">
                 <div class="col-xl-6">
                     <div id="panel-1" class="panel">
@@ -61,29 +80,25 @@ $result = $statement->fetch(PDO::FETCH_ASSOC);
                                 <!-- username -->
                                 <div class="form-group">
                                     <label class="form-label" for="simpleinput">Имя</label>
-                                    <input name="username" "type="text" id="simpleinput" class="form-control"
-                                           value="<?=$result['username']?>">
+                                    <input name="username" type="text" id="simpleinput" class="form-control" value="<?=$user[0]->username?>">
                                 </div>
 
                                 <!-- title -->
                                 <div class="form-group">
                                     <label class="form-label" for="simpleinput">Место работы</label>
-                                    <input name="job_title" type="text" id="simpleinput" class="form-control"
-                                           value="<?=$result['job_title']?>">
+                                    <input name="job_title" type="text" id="simpleinput" class="form-control" value="<?=$user[0]->job_title?>">
                                 </div>
 
                                 <!-- tel -->
                                 <div class="form-group">
                                     <label class="form-label" for="simpleinput">Номер телефона</label>
-                                    <input name="phone" type="text" id="simpleinput" class="form-control"
-                                           value="<?=$result['phone']?>">
+                                    <input name="phone" type="text" id="simpleinput" class="form-control" value="<?=$user[0]->phone?>">
                                 </div>
 
                                 <!-- address -->
                                 <div class="form-group">
                                     <label class="form-label" for="simpleinput">Адрес</label>
-                                    <input name="address" type="text" id="simpleinput" class="form-control"
-                                           value="<?=$result['address']?>">
+                                    <input name="address" type="text" id="simpleinput" class="form-control" value="<?=$user[0]->address?>">
                                 </div>
                                 <div class="col-md-12 mt-3 d-flex flex-row-reverse">
                                     <button type="submit" class="btn btn-warning">Редактировать</button>

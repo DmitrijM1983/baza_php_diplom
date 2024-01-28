@@ -1,17 +1,36 @@
 <?php
-session_start();
-require_once 'functions.php';
 
-$id = $_GET['id'];
-$_SESSION['id'] = $id;
+require_once 'init.php';
 
-$pdo = getConnection();
-$sql = "SELECT image FROM diplom_baza WHERE id =:id";
-$statement = $pdo->prepare($sql);
-$statement->execute(['id'=>$id]);
-$image = $statement->fetch(PDO::FETCH_COLUMN);
+if (isset($_GET['id'])) {
+    $image = DataBase::getConnect()->get('users', ['id'=>$_GET['id']])[0]->image;
+}
 
- ?>
+if (isset($_FILES['image']) && $_FILES['image']['size'] > 0) {
+    $name = explode('.', $_FILES['image']['name']);
+    $name = $name[1];
+    $size = $_FILES['image']['size'];
+    $validate = new Validate();
+    $checkFile = $validate->checkFile($name, $size);
+    if ($checkFile) {
+        $user = new User;
+        $user->find($_GET['id']);
+        $fileName = $user->getData()->image;
+        unlink($fileName);
+        $image = 'img/demo/avatars/avatar-' . uniqid() . '.' . $name;
+        $tmp = $_FILES['image']['tmp_name'];
+        move_uploaded_file($tmp, __DIR__ . '/' . $image);
+        $user->update(['image'=>$image], $_GET['id']);
+        Session::setFlash('success', 'Avatar updated successfully!');
+        Redirect::to('users.php');
+    } else {
+        $error = $validate->errors()[0];
+    }
+} else {
+    $error = 'Вы не выбрали аватар!';
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,6 +46,7 @@ $image = $statement->fetch(PDO::FETCH_COLUMN);
     <link rel="stylesheet" media="screen, print" href="css/fa-brands.css">
 </head>
 <body>
+<?php if (isset($error)): echo $error; endif;?>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary bg-primary-gradient">
         <a class="navbar-brand d-flex align-items-center fw-500" href="users.php"><img alt="logo" class="d-inline-block align-top mr-2" src="img/logo.png"> Учебный проект</a> <button aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-target="#navbarColor02" data-toggle="collapse" type="button"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="navbarColor02">
@@ -39,6 +59,9 @@ $image = $statement->fetch(PDO::FETCH_COLUMN);
                 <li class="nav-item">
                     <a class="nav-link" href="users.php">Назад</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="page_login.php">Выйти</a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -49,7 +72,7 @@ $image = $statement->fetch(PDO::FETCH_COLUMN);
             </h1>
 
         </div>
-        <form action="update_media.php" method="post" enctype="multipart/form-data">
+        <form action="" method="post" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-xl-6">
                     <div id="panel-1" class="panel">
@@ -66,10 +89,8 @@ $image = $statement->fetch(PDO::FETCH_COLUMN);
                                     <label class="form-label" for="example-fileinput">Выберите аватар</label>
                                     <input name="image" type="file" id="example-fileinput" class="form-control-file">
                                 </div>
-
-
                                 <div class="col-md-12 mt-3 d-flex flex-row-reverse">
-                                    <button class="btn btn-warning" type="submit">Загрузить</button>
+                                    <button type="submit" class="btn btn-warning">Загрузить</button>
                                 </div>
                             </div>
                         </div>

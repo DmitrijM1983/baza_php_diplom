@@ -1,22 +1,20 @@
 <?php
-session_start();
-require_once 'functions.php';
-$id = $_GET['id'];
 
-$pdo = getConnection();
-$sql = "SELECT image FROM diplom_baza WHERE id =:id";
-$statement = $pdo->prepare($sql);
-$statement->execute(['id' => $id]);
-$result = $statement->fetch(PDO::FETCH_COLUMN);
-unlink(__DIR__ . '/' . $result);
+require_once 'init.php';
 
-$sql = "DELETE FROM diplom_baza WHERE id =:id";
-$statement = $pdo->prepare($sql);
-$statement->execute(['id' => $id]);
+$user = new User;
+$user->find($_GET['id']);
+$image = $user->getData()->image;
 
-if (isAdmin()) {
-    header('Location:users.php');
-} else {
-    header('Location:page_register.php');
+if ($image != null) {
+    unlink($image);
 }
+DataBase::getConnect()->delete('users', ['id'=>$_GET['id']]);
 
+if ($_SESSION['user'] === $_GET['id']) {
+    Redirect::to('index.php');
+    exit;
+} else {
+    Session::setFlash('success', 'User deleted successfully!');
+    Redirect::to('users.php');
+}

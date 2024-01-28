@@ -1,14 +1,14 @@
 <?php
-require_once 'functions.php';
-$id = $_GET['id'];
 
-$pdo = getConnection();
-$sql = "SELECT * FROM diplom_baza WHERE id =:id";
-$statement = $pdo->prepare($sql);
-$statement->execute(['id'=>$id]);
-$user = $statement->fetch(PDO::FETCH_ASSOC);
+require_once 'init.php';
+$id = $_SESSION['user'];
+
+$user = new User();
+$user->find($id);
+$result = $user->getData();
 
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,11 +40,10 @@ $user = $statement->fetch(PDO::FETCH_ASSOC);
                 </ul>
             </div>
         </nav>
-
         <main id="js-page-content" role="main" class="page-content mt-3">
             <div class="subheader">
                 <h1 class="subheader-title">
-                    <i class='subheader-icon fal fa-user'></i> <?=$user['username']?>
+                    <i class='subheader-icon fal fa-user'></i> <?=$result->username?>
                 </h1>
             </div>
             <div class="row">
@@ -54,19 +53,18 @@ $user = $statement->fetch(PDO::FETCH_ASSOC);
                         <div class="row no-gutters row-grid">
                             <div class="col-12">
                                 <div class="d-flex flex-column align-items-center justify-content-center p-4">
-                                    <img src="<?=$user['image']?>" class="rounded-circle shadow-2 img-thumbnail" alt="">
+                                    <img src="<?=$result->image?>" class="rounded-circle shadow-2 img-thumbnail" alt="">
                                     <h5 class="mb-0 fw-700 text-center mt-3">
-                                        <?=$user['username']?>
-                                        <small class="text-muted mb-0"><?=$user['address']?></small>
+                                        <?=$result->username?>
                                     </h5>
                                     <div class="mt-4 text-center demo">
-                                        <a href="<?=$user['instagram']?>" class="fs-xl" style="color:#C13584">
+                                        <a href="<?=$result->instagram?>" class="fs-xl" style="color:#C13584">
                                             <i class="fab fa-instagram"></i>
                                         </a>
-                                        <a href="<?=$user['vk']?>" class="fs-xl" style="color:#4680C2">
+                                        <a href="<?=$result->vk?>" class="fs-xl" style="color:#4680C2">
                                             <i class="fab fa-vk"></i>
                                         </a>
-                                        <a href="<?=$user['telegram']?>" class="fs-xl" style="color:#0088cc">
+                                        <a href="<?=$result->telegram?>" class="fs-xl" style="color:#0088cc">
                                             <i class="fab fa-telegram"></i>
                                         </a>
                                     </div>
@@ -74,12 +72,12 @@ $user = $statement->fetch(PDO::FETCH_ASSOC);
                             </div>
                             <div class="col-12">
                                 <div class="p-3 text-center">
-                                    <a href="tel:+13174562564" class="mt-1 d-block fs-sm fw-400 text-dark">
-                                        <i class="fas fa-mobile-alt text-muted mr-2"></i> <?=$user['phone']?></a>
-                                    <a href="mailto:oliver.kopyov@marlin.ru" class="mt-1 d-block fs-sm fw-400 text-dark">
-                                        <i class="fas fa-mouse-pointer text-muted mr-2"></i> <?=$user['email']?></a>
+                                    <a href="tel:<?=$result->phone?>" class="mt-1 d-block fs-sm fw-400 text-dark">
+                                        <i class="fas fa-mobile-alt text-muted mr-2"></i> <?=$result->phone?></a>
+                                    <a href="<?=$result->email?>" class="mt-1 d-block fs-sm fw-400 text-dark">
+                                        <i class="fas fa-mouse-pointer text-muted mr-2"></i> <?=$result->email?></a>
                                     <address class="fs-sm fw-400 mt-4 text-muted">
-                                        <i class="fas fa-map-pin mr-2"></i> <?=$user['address']?>
+                                        <i class="fas fa-map-pin mr-2"></i> <?=$result->address?>
                                     </address>
                                 </div>
                             </div>

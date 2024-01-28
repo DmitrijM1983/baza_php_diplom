@@ -1,7 +1,29 @@
 <?php
-session_start();
-?>
 
+require_once 'init.php';
+
+$rules = ['email' => ['required' => true, 'email' => true,], 'password' => ['required' => true]];
+
+$err = '';
+if (Input::exists()) {
+//    if (Token::check(Input::get('token'))) {
+        $validate = new Validate();
+        $validation = $validate->check($_POST, $rules);
+
+        if ($validation->passed()) {
+            $user = new User;
+            $remember = (Input::get('remember')) === 'on';
+            $user->login(Input::get('email'), Input::get('password'), $remember);
+        } else {
+            foreach ($validation->errors() as $error) {
+                $err .= $error . ', ';
+            }
+        }
+//   }
+}
+$error = rtrim($err, ', ');
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -37,19 +59,34 @@ session_start();
             </a>
         </div>
         <div class="card p-4 border-top-left-radius-0 border-top-right-radius-0">
-            <?php if (!empty($_SESSION['validation'])):?>
-                <div class="alert alert-<?=key($_SESSION['validation'])?>">
-                    <?=$_SESSION['validation'][key($_SESSION['validation'])]?>
+            <?php if (Session::exists('success')): ?>
+            <div class="alert alert-success">
+                <?=Session::getFlash('success');?>
+            </div>
+            <?php endif;?>
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger">
+                    <?=$error?>
                 </div>
-            <?php endif; ?>
-            <form action="login.php" method="post">
+            <?php endif;?>
+            <?php if (Session::exists('error')): ?>
+                <div class="alert alert-danger">
+                    <?=Session::getFlash('error')?>
+                </div>
+            <?php endif;?>
+            <form action="" method="post">
                 <div class="form-group">
-                    <label class="form-label" for="username">Email</label>
-                    <input type="text" name="email" id="username" class="form-control" placeholder="Эл. адрес" value="<?=$_SESSION['email'] ?? ''?>">
+                    <label class="form-label" for="email">Email</label>
+                    <input name="email" type="text" id="email" class="form-control" placeholder="Эл. адрес" value="<?=Session::get('email') ?? ''?>">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="password">Пароль</label>
-                    <input name="password" type="password" id="password" class="form-control">
+                    <input name="password" type="password" id="password" class="form-control" placeholder="" >
+                </div>
+                <input type="hidden" name="token" value="<?=Token::generate()?>">
+                <div>
+                    <input type="checkbox" name="remember" id="remember">
+                    <label for="remember">Запомнить меня</label>
                 </div>
                 <button type="submit" class="btn btn-default float-right">Войти</button>
             </form>
@@ -65,5 +102,7 @@ session_start();
     <script src="js/vendors.bundle.js"></script>
 </body>
 </html>
+
 <?php
-$_SESSION['validation'] = [];
+
+$_SESSION['email'] = '';

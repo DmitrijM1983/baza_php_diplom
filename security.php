@@ -1,17 +1,49 @@
 <?php
-session_start();
-require_once 'functions.php';
 
- if (isset($_GET['id'])) {
-     $_SESSION['id'] = $_GET['id'];
- }
-$id = $_SESSION['id'];
+require_once 'init.php';
 
-$pdo = getConnection();
-$sql = "SELECT email FROM diplom_baza WHERE id =:id";
-$statement = $pdo->prepare($sql);
-$statement->execute(['id'=>$id]);
-$email = $statement->fetch(PDO::FETCH_COLUMN);
+$user = DataBase::getConnect()->get('users', ['id'=>$_GET['id']]);
+
+if (!empty($_POST)) {
+    $validate = new Validate();
+    $validation = $validate->check($_POST, [
+        'email' =>
+        [
+            'required' => true,
+            'email' => true,
+            'min' => 8,
+            'max' => 25
+        ],
+        'password' =>
+            [
+                'required' => true,
+                'min' => 3
+            ],
+        'password_again' =>
+            [
+                'required' => true,
+                'matches' => 'password'
+            ]]);
+    if (isset($_POST['email'])) {
+        $checkEmail = $validation->checkUser('email', $_POST['email'], $_GET['id']);
+    }
+
+    if($validation->passed() && $checkEmail) {
+        $params = [];
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+        $params['email'] = $_POST['email'];
+        $params['password'] = $password;
+        $user = new User();
+        $user->update($params, $_GET['id']);
+        Session::setFlash('success', 'Profile updated successfully!');
+        Redirect::to('users.php');
+    } else {
+        foreach ($validation->errors() as $error) {
+            echo $error . '<br>';
+        }
+    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -51,16 +83,11 @@ $email = $statement->fetch(PDO::FETCH_COLUMN);
             </h1>
 
         </div>
-        <form action="update_security.php" method="post">
+        <form action="" method="post">
             <div class="row">
                 <div class="col-xl-6">
                     <div id="panel-1" class="panel">
                         <div class="panel-container">
-                            <?php if (!empty($_SESSION['validation']['error'])):?>
-                                <div class="alert alert-danger text-dark" role="alert">
-                                    <strong>Уведомление!</strong> <?=$_SESSION['validation']['error']?>
-                                </div>
-                            <?php endif; ?>
                             <div class="panel-hdr">
                                 <h2>Обновление эл. адреса и пароля</h2>
                             </div>
@@ -68,20 +95,19 @@ $email = $statement->fetch(PDO::FETCH_COLUMN);
                                 <!-- email -->
                                 <div class="form-group">
                                     <label class="form-label" for="simpleinput">Email</label>
-                                    <input name="email" type="text" id="simpleinput" class="form-control"
-                                           value="<?=$email?>">
+                                    <input name="email" type="text" id="simpleinput" class="form-control" value="<?=$user[0]->email?>">
                                 </div>
 
                                 <!-- password -->
                                 <div class="form-group">
                                     <label class="form-label" for="simpleinput">Пароль</label>
-                                    <input name="password1" type="password" id="simpleinput" class="form-control">
+                                    <input name="password" type="password" id="simpleinput" class="form-control">
                                 </div>
 
                                 <!-- password confirmation-->
                                 <div class="form-group">
                                     <label class="form-label" for="simpleinput">Подтверждение пароля</label>
-                                    <input name="password2" type="password" id="simpleinput" class="form-control">
+                                    <input name="password again" type="password" id="simpleinput" class="form-control">
                                 </div>
 
 
@@ -131,6 +157,3 @@ $email = $statement->fetch(PDO::FETCH_COLUMN);
     </script>
 </body>
 </html>
-
-<?php
-$_SESSION['validation'] = [];

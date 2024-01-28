@@ -1,10 +1,11 @@
 <?php
-session_start();
-require_once 'functions.php';
 
-$users = getUsers();
+require_once 'init.php';
+$person = new User();
+$users = $person->getUsers();
 
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,28 +31,28 @@ $users = getUsers();
                 </ul>
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="page_login.php">Выйти</a>
+                        <a class="nav-link" href="logout.php">Выйти</a>
                     </li>
                 </ul>
             </div>
         </nav>
-
         <main id="js-page-content" role="main" class="page-content mt-3">
-            <?php if (!empty($_SESSION['new'])): ?>
+            <?php if (isset($_SESSION['success'])): ?>
             <div class="alert alert-success">
-                Профиль успешно обновлен.
+                <?=Session::getFlash('success');?>
             </div>
-            <?php endif; ?>
+            <?php endif;?>
+
             <div class="subheader">
                 <h1 class="subheader-title">
                     <i class='subheader-icon fal fa-users'></i> Список пользователей
                 </h1>
             </div>
+            <?php if ($person->isAdmin()): ?>
             <div class="row">
                 <div class="col-xl-12">
-                    <?php if (isAdmin()): ?>
                     <a class="btn btn-success" href="create_user.php">Добавить</a>
-                    <?php endif; ?>
+                    <a class="btn btn-info" href="page_profile.php?id=<?=Session::get(Config::get('session.user_session'))?>">Профиль</a>
                     <div class="border-faded bg-faded p-3 mb-g d-flex mt-3">
                         <input type="text" id="js-filter-contacts" name="filter-contacts" class="form-control shadow-inset-2 form-control-lg" placeholder="Найти пользователя">
                         <div class="btn-group btn-group-lg btn-group-toggle hidden-lg-down ml-3" data-toggle="buttons">
@@ -65,55 +66,56 @@ $users = getUsers();
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
             <div class="row" id="js-contacts">
-                <?php foreach ($users as $user): ;?>
+                <?php foreach ($users as $user): ?>
+
                 <div class="col-xl-4">
-                    <div id="<?=$user['id']?>" class="card border shadow-0 mb-g shadow-sm-hover" data-filter-tags="<?=$user['username']?>">
+                    <div id="c_1" class="card border shadow-0 mb-g shadow-sm-hover" data-filter-tags="<?=$user->username;?>">
                         <div class="card-body border-faded border-top-0 border-left-0 border-right-0 rounded-top">
                             <div class="d-flex flex-row align-items-center">
-                            <?php
-                            if ($user['status'] === 'online') {
-                                $status = 'success'; }
-                            if ($user['status'] === 'moved away') {
-                            $status = 'warning'; }
-                            if ($user['status'] === 'do not disturb') {
-                                $status = 'secondary'; } ?>
+
+                                <?php if ($user->status === 'online') {
+                                    $status = 'success';
+                                    } elseif ($user->status === 'moved away') {
+                                    $status = 'warning';
+                                    } elseif ($user->status === 'do not disturb') {
+                                    $status = 'secondary'; }?>
                                 <span class="status status-<?=$status?> mr-3">
-                                    <span class="rounded-circle profile-image d-block " style="background-image:url('<?=$user['image']?>'); background-size: cover;"></span>
+                                    <span class="rounded-circle profile-image d-block " style="background-image:url(<?=$user->image;?>); background-size: cover;"></span>
                                 </span>
+
+                                <?php if ($person->isAdmin() || $user->id == Session::get(Config::get('session.user_session'))): ?>
                                 <div class="info-card-text flex-1">
                                     <a href="javascript:void(0);" class="fs-xl text-truncate text-truncate-lg text-info" data-toggle="dropdown" aria-expanded="false">
-                                        <?=$user['username']?>
-                                        <?php if (isAdmin() || isEquival($user)): ?>
+                                        <?=$user->username;?>
                                         <i class="fal fas fa-cog fa-fw d-inline-block ml-1 fs-md"></i>
                                         <i class="fal fa-angle-down d-inline-block ml-1 fs-md"></i>
-                                        <?php endif;?>
                                     </a>
-                                    <?php if (isAdmin() || isEquival($user)): ?>
                                     <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="edit.php?id=<?=$user['id']?>">
+                                        <a class="dropdown-item" href="page_profile.php?id=<?=$user->id?>">
+                                            <i class="fa fa-edit"></i>
+                                            Просмотреть профиль</a>
+                                        <a class="dropdown-item" href="edit.php?id=<?=$user->id?>">
                                             <i class="fa fa-edit"></i>
                                         Редактировать</a>
-                                        <a class="dropdown-item" href="security.php?id=<?=$user['id']?>">
+                                        <a class="dropdown-item" href="security.php?id=<?=$user->id?>">
                                             <i class="fa fa-lock"></i>
                                         Безопасность</a>
-                                        <a class="dropdown-item" href="status.php?id=<?=$user['id']?>">
+                                        <a class="dropdown-item" href="status.php?id=<?=$user->id?>">
                                             <i class="fa fa-sun"></i>
                                         Установить статус</a>
-                                        <a class="dropdown-item" href="media.php?id=<?=$user['id']?>">
+                                        <a class="dropdown-item" href="media.php?id=<?=$user->id?>">
                                             <i class="fa fa-camera"></i>
                                             Загрузить аватар
                                         </a>
-                                        <a href="delete.php?id=<?=$user['id']?>" class="dropdown-item" onclick="return confirm('are you sure?');">
+                                        <a href="delete.php?id=<?=$user->id?>" class="dropdown-item" onclick="return confirm('are you sure?');">
                                             <i class="fa fa-window-close"></i>
                                             Удалить
                                         </a>
                                     </div>
-                                    <?php endif; ?>
-                                    <span class="text-truncate text-truncate-xl"><?=$user['job_title']?></span>
-                                </div>
-                                <div>
-                                    <a href="page_profile.php?id=<?=$user['id']?>" class="fs-xl text-truncate text-truncate-lg text-info">Просмотреть профиль</a>
+                                    <?php endif;?>
+                                    <span class="text-truncate text-truncate-xl"><?=$user->job_title;?></span>
                                 </div>
                                 <button class="js-expand-btn btn btn-sm btn-default d-none" data-toggle="collapse" data-target="#c_1 > .card-body + .card-body" aria-expanded="false">
                                     <span class="collapsed-hidden">+</span>
@@ -123,25 +125,23 @@ $users = getUsers();
                         </div>
                         <div class="card-body p-0 collapse show">
                             <div class="p-3">
-                                <a href="tel: <?=$user['phone']?>" class="mt-1 d-block fs-sm fw-400 text-dark">
-                                    <i class="fas fa-mobile-alt text-muted mr-2"></i> <?=$user['phone']?></a>
-                                <a href="mailto: <?=$user['email']?>" class="mt-1 d-block fs-sm fw-400 text-dark">
-                                    <i class="fas fa-mouse-pointer text-muted mr-2"></i> <?=$user['email']?></a>
+                                <a href="<?=$user->phone;?>" class="mt-1 d-block fs-sm fw-400 text-dark">
+                                    <i class="fas fa-mobile-alt text-muted mr-2"></i> <?=$user->phone;?></a>
+                                <a href="mailto:<?=$user->phone;?>" class="mt-1 d-block fs-sm fw-400 text-dark">
+                                    <i class="fas fa-mouse-pointer text-muted mr-2"></i> <?=$user->email;?></a>
                                 <address class="fs-sm fw-400 mt-4 text-muted">
-                                    <i class="fas fa-map-pin mr-2"></i> <?=$user['address']?></address>
-
+                                    <i class="fas fa-map-pin mr-2"></i> <?=$user->address;?></address>
                                 <div class="d-flex flex-row">
-                                    <a href="<?=$user['vk']?>" class="mr-2 fs-xxl" style="color:#4680C2">
+                                    <a href="javascript:void(0);" class="mr-2 fs-xxl" style="color:#4680C2">
                                         <i class="fab fa-vk"></i>
                                     </a>
-                                    <a href="<?=$user['telegram']?>;" class="mr-2 fs-xxl" style="color:#38A1F3">
+                                    <a href="javascript:void(0);" class="mr-2 fs-xxl" style="color:#38A1F3">
                                         <i class="fab fa-telegram"></i>
                                     </a>
-                                    <a href="<?=$user['instagram']?>" class="mr-2 fs-xxl" style="color:#E1306C">
+                                    <a href="javascript:void(0);" class="mr-2 fs-xxl" style="color:#E1306C">
                                         <i class="fab fa-instagram"></i>
                                     </a>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -198,5 +198,3 @@ $users = getUsers();
 
     </script>
 </html>
-<?php
-$_SESSION['new'] = [];

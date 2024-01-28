@@ -1,5 +1,59 @@
 <?php
-session_start();
+
+require_once 'init.php';
+
+$rules = [
+    'username' =>
+        [
+            'required' => true,
+            'min' => 3,
+            'max' => 20,
+            'unique' => 'users'
+        ],
+    'email' =>
+        [
+            'required' => true,
+            'email' => true,
+            'min' => 8,
+            'max' => 25,
+            'unique' => 'users'
+        ],
+    'password' =>
+        [
+            'required' => true,
+            'min' => 3
+        ],
+    'password_again' =>
+        [
+            'required' => true,
+            'matches' => 'password'
+        ]
+];
+$err = '';
+if (Input::exists()) {
+//    if (Token::check(Input::get('token'))) {
+        $validate = new Validate();
+        $validation = $validate->check($_POST, $rules);
+
+        if ($validation->passed()) {
+            Session::setFlash('success', 'register success');
+            $user = new User();
+            $tableValues = [
+                'username'=>Input::get('username'),
+                'email'=>Input::get('email'),
+                'password'=>password_hash(Input::get('password'), PASSWORD_DEFAULT)
+            ];
+            Session::put('email', Input::get('email'));
+            $user->create('users', $tableValues);
+            Redirect::to('page_login.php');
+        } else {
+            foreach ($validation->errors() as $error) {
+                $err .= $error . ' ';
+            }
+        }
+//    }
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -26,6 +80,11 @@ session_start();
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon/favicon-32x32.png">
     <link rel="mask-icon" href="img/favicon/safari-pinned-tab.svg" color="#5bbad5">
     <link rel="stylesheet" media="screen, print" href="css/fa-brands.css">
+    <style>
+        .error {
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <div class="page-wrapper auth">
@@ -53,29 +112,40 @@ session_start();
                             <div class="col-xl-12">
                                 <h2 class="fs-xxl fw-500 mt-4 text-white text-center">
                                     Регистрация
-                                    <br><br>
-                                </h2>
+                                </h2><br>
                             </div>
                             <div class="col-xl-6 ml-auto mr-auto">
                                 <div class="card p-4 rounded-plus bg-faded">
-                                    <?php if (!empty($_SESSION['validation']['email_error'])):?>
-                                    <div class="alert alert-danger text-dark" role="alert">
-                                        <strong>Уведомление!</strong> <?=$_SESSION['validation']['email_error']?>
+                                    <?php if ($err != ''): ?>
+                                    <div class="error">
+                                        <div class="alert alert-danger text-dark" role="alert">
+                                            <strong><?=$err?></strong>
+                                        </div>
                                     </div>
-                                    <?php endif; ?>
-                                    <form id="js-login" novalidate="" action="register.php" method="post">
+                                    <?php endif;?>
+                                    <form id="js-login" novalidate="" action="" method="post">
+                                        <div class="form-group">
+                                            <label class="form-label" for="usernameverify">Username</label>
+                                            <input type="text" id="usernameverify" class="form-control" name="username">
+                                            <div class="invalid-feedback">Заполните поле.</div>
+                                        </div>
                                         <div class="form-group">
                                             <label class="form-label" for="emailverify">Email</label>
-                                            <input name="email" type="text" id="emailverify" class="form-control" placeholder="Эл. адрес" required>
+                                            <input type="text" id="emailverify" class="form-control" name="email">
                                             <div class="invalid-feedback">Заполните поле.</div>
                                             <div class="help-block">Эл. адрес будет вашим логином при авторизации</div>
                                         </div>
                                         <div class="form-group">
                                             <label class="form-label" for="userpassword">Пароль <br></label>
-                                            <input name="password" type="password" id="userpassword" class="form-control" placeholder="" required>
+                                            <input type="password" name="password" id="userpassword" class="form-control" placeholder="" >
                                             <div class="invalid-feedback">Заполните поле.</div>
                                         </div>
-                                       
+                                        <div class="form-group">
+                                            <label class="form-label" for="userpassword">Повторите пароль <br></label>
+                                            <input type="password" name="password again" id="userpassword" class="form-control" placeholder="" >
+                                            <div class="invalid-feedback">Заполните поле.</div>
+                                        </div>
+                                        <input type="hidden" name="token" value="<?=Token::generate()?>">
                                         <div class="row no-gutters">
                                             <div class="col-md-4 ml-auto text-right">
                                                 <button id="js-login-btn" type="submit" class="btn btn-block btn-danger btn-lg mt-3">Регистрация</button>
@@ -90,7 +160,7 @@ session_start();
             </div>
         </div>
     </div>
-    
+
     <script src="js/vendors.bundle.js"></script>
     <script>
         $("#js-login-btn").click(function(event)
@@ -112,6 +182,3 @@ session_start();
     </script>
 </body>
 </html>
-<?php
-
-$_SESSION['validation'] = [];

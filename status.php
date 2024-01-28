@@ -1,9 +1,6 @@
 <?php
-session_start();
-require_once 'functions.php';
 
-$_SESSION['id'] = $_GET['id'];
-$id = $_GET['id'];
+require_once 'init.php';
 
 $arrayStatus =
     [
@@ -12,11 +9,22 @@ $arrayStatus =
         'Не беспокоить' => 'do not disturb'
     ];
 
-$pdo = getConnection();
-$sql = "SELECT status FROM diplom_baza WHERE id =:id";
-$statement = $pdo->prepare($sql);
-$statement->execute(['id'=>$id]);
-$status = $statement->fetch(PDO::FETCH_COLUMN);
+$user = DataBase::getConnect()->get('users', ['id'=>$_GET['id']]);
+$status = $user[0]->status;
+
+if (!empty($_POST)) {
+    foreach ($arrayStatus as $key=>$value) {
+        if ($_POST['status'] === $key) {
+            $status = $value;
+        } else {
+            continue;
+        }
+    }
+    $user = new User();
+    $user->update(['status'=>$status], $_GET['id']);
+    Session::setFlash('success', 'Status updated successfully!');
+    Redirect::to('users.php');
+}
 
 ?>
 
@@ -36,7 +44,7 @@ $status = $statement->fetch(PDO::FETCH_COLUMN);
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary bg-primary-gradient">
-        <a class="navbar-brand d-flex align-items-center fw-500" href="users.html"><img alt="logo" class="d-inline-block align-top mr-2" src="img/logo.png"> Учебный проект</a> <button aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-target="#navbarColor02" data-toggle="collapse" type="button"><span class="navbar-toggler-icon"></span></button>
+        <a class="navbar-brand d-flex align-items-center fw-500" href="users.php"><img alt="logo" class="d-inline-block align-top mr-2" src="img/logo.png"> Учебный проект</a> <button aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation" class="navbar-toggler" data-target="#navbarColor02" data-toggle="collapse" type="button"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="navbarColor02">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
@@ -55,8 +63,9 @@ $status = $statement->fetch(PDO::FETCH_COLUMN);
             <h1 class="subheader-title">
                 <i class='subheader-icon fal fa-sun'></i> Установить статус
             </h1>
+
         </div>
-        <form action="update_status.php" method="post">
+        <form action="" method="post">
             <div class="row">
                 <div class="col-xl-6">
                     <div id="panel-1" class="panel">
@@ -70,23 +79,23 @@ $status = $statement->fetch(PDO::FETCH_COLUMN);
                                         <!-- status -->
                                         <div class="form-group">
                                             <label class="form-label" for="example-select">Выберите статус</label>
-                                            <select name="status" class="form-control" id="example-select">
+                                            <select name="status" class="form-control" id="example-select" >
                                                 <?php foreach ($arrayStatus as $key=>$value):
-                                                if ($status != $value){
-                                                continue; } else { ?>
-                                                 <option><?=$key?></option>
-                                                 <?php unset($arrayStatus[$key]); } endforeach;
+                                                    if ($status != $value){
+                                                        continue; } else { ?>
+                                                        <option><?=$key?></option>
+                                                        <?php unset($arrayStatus[$key]); } endforeach;
                                                 foreach ($arrayStatus as $key=>$value): ?>
-                                                <option><?=$key?></option>
-                                                <?php unset($arrayStatus[$key]);
-                                                break;
+                                                    <option><?=$key?></option>
+                                                    <?php unset($arrayStatus[$key]);
+                                                    break;
                                                 endforeach; ?>
                                                 <option><?=array_key_first($arrayStatus)?></option>
                                             </select>
                                         </div>
                                     </div>
                                     <div class="col-md-12 mt-3 d-flex flex-row-reverse">
-                                        <button type="submit" class="btn btn-warning">Set Status</button>
+                                        <button class="btn btn-warning">Set Status</button>
                                     </div>
                                 </div>
                             </div>
@@ -132,5 +141,3 @@ $status = $statement->fetch(PDO::FETCH_COLUMN);
     </script>
 </body>
 </html>
-
-
